@@ -1,18 +1,14 @@
-pro write_apfile,apid,tracefile,apsize_pix,ygal,ygal_b
+pro write_apfile,apid,tracefile,apsize_pix,ygal
 
 if n_params() lt 2 then begin
-    print,' Syntax - write_apfile,apid,apsize_pix,ygalred,ygalblue'
-    print,' Syntax - write_apfile,"sn04bu","trace",10,643,754.4'
+    print,' Syntax - write_apfile,apid,tracefile,apsize_pix,ygal'
+    print,' Syntax - write_apfile,"sn04bu","trace",10,643'
     print,' Also See - compute_apertures.pro'
     print,' PURPOSE: Compute the lower and upper aperture values for a given aperturesize'
     print,'          for when the position to be extracted is different from ygal, but '
     print,'          galaxy is used for defining trace - default values for LRIS pre 2009'
     print,' INPUT: - apsize = total aperturse size in pixels, e.g. -5:5 is 10 pixels'
     print,'        - ygal = read from curser  where the center of galaxy at Halpha is -RED'
-    print,'        PROMPTED: other y values for HII regions'
-    print,' KEYWORD: - /blue  = when wanting to extract on blue side: '
-    print,'                     input the same values as for red side and  '
-    print,'                     script will compute values for the pixel scale of blue CCD'
     print,'OUTPUT: lower,upper: to be used for apall when centering on galaxy for '
     print,'        trace but  wanting to extract HII regions'
     print,'        separation: separation b/w ygal and HIIregion in arcsec'
@@ -41,6 +37,10 @@ readcol,tracefile,coef6, skipline=26, numline=1, FORMAT='(A)',/SILENT
 readcol,tracefile,coef7, skipline=27, numline=1, FORMAT='(A)',/SILENT
 readcol,tracefile,coef8, skipline=28, numline=1, FORMAT='(A)',/SILENT
 
+    openw,u,'ap'+name,/get_lun
+
+    print,"REGION             LOWER     UPPER     CENTER ArcSecSep  BACKGROUND(-20:-10,10:20)"
+
 repeat begin
 
    readcol,apid,x,yh2, $
@@ -48,52 +48,71 @@ repeat begin
 
  lowerval = (-ygal+yh2) - (apsize_pix/2.)
  upperval = (-ygal+yh2) + (apsize_pix/2.)
- yh2_b = ygal_b - (ygal-yh2)
  h2sep = (yh2-ygal)*0.135
- sam1 =  (-ygal+yh2) - 20
- sam2 =  (-ygal+yh2) - 10
- sam3 =  (-ygal+yh2) + 10
- sam4 =  (-ygal+yh2) + 20
+ sam1 =  (-ygal+yh2) - 20.0
+ sam2 =  (-ygal+yh2) - 10.0
+ sam3 =  (-ygal+yh2) + 10.0
+ sam4 =  (-ygal+yh2) + 20.0
+
+;here is an attempt to fix the background problem
+  str1=string(sam1)
+  str2=string(sam2)
+  str12=str1+str2
+  left=strjoin(strsplit(str12, /EXTRACT),':')
+  remchar,left, '00'
+
+  str3=string(sam3)
+  str4=string(sam4)
+  str34=str3+str4
+  right=strjoin(strsplit(str34, /EXTRACT),':')
+  remchar,right, '00'
+
+; print,left,right
 
 
-;    print,"REGION             LOWER     UPPER   CENTERRed CENTERBlue ArcSecSep  BACKGROUND(-20:-10,10:20)"
-;    print,'HII region',n+1,' =',lowerval,upperval,yh2,yh2_b,h2sep,sam1,':',sam2,',',sam3,':',sam4, $
-;          FORMAT='(A10,I2,A2,6F10.1,A1,F-10.1,T81,A1,F-10.1,T87,A1,F-10.1)'
-    print,'# ',systime()
-    print,'begin	aperture ',name,n+1,xcenter,ygal, FORMAT='(A,A,I2,X,A,X,F-10.1)'
-    print,'	image	',name, FORMAT='(A,A)'
-    print,'	aperture	',n+1, FORMAT='(A,I1)'
-    print,'	beam	',n+1, FORMAT='(A,I1)'
-    print,'	center	',xcenter,ygal, FORMAT='(A,A,X,F-10.1)'
-    print,'	low	',xlow,lowerval, FORMAT='(A,A,X,F-10.1)'
-    print,'	high	',xhigh,upperval, FORMAT='(A,A,X,F-10.1)'
-    print,'	background'
-    print,'		xmin ',sam1, FORMAT='(A,F-10.1)'
-    print,'		xmax ',sam4, FORMAT='(A,F-10.1)'
-    print,'		function legendre'
-    print,'		order 2'
-    print,'		sample  ',sam1,':',sam2,',',sam3,':',sam4, $
+;    print,"REGION             LOWER     UPPER   CENTER ArcSecSep  BACKGROUND(-20:-10,10:20)"
+    print,'HII region',n+1,' =',lowerval,upperval,yh2,h2sep,sam1,':',sam2,',',sam3,':',sam4, $
+          FORMAT='(A10,I2,A2,5F10.1,A1,F-10.1,T71,A1,F-10.1,T77,A1,F-10.1)'
+;    print,'HII region',n+1,' =',lowerval,upperval,yh2,h2sep,sam1,':',sam2,',', $
+;          FORMAT='(A10,I2,A2,5F10.1,A1,F-10.1,T71,A1)'
+
+ printf,u,'# ',systime()
+ printf,u,'begin	aperture ',name,n+1,xcenter,ygal, FORMAT='(A,A,I2,X,A,X,F-10.1)'
+ printf,u,'	image	',name, FORMAT='(A,A)'
+ printf,u,'	aperture	',n+1, FORMAT='(A,I1)'
+ printf,u,'	beam	',n+1, FORMAT='(A,I1)'
+ printf,u,'	center	',xcenter,ygal, FORMAT='(A,A,X,F-10.1)'
+ printf,u,'	low	',xlow,lowerval, FORMAT='(A,A,X,F-10.1)'
+ printf,u,'	high	',xhigh,upperval, FORMAT='(A,A,X,F-10.1)'
+ printf,u,'	background'
+ printf,u,'		xmin ',sam1, FORMAT='(A,F-10.1)'
+ printf,u,'		xmax ',sam4, FORMAT='(A,F-10.1)'
+ printf,u,'		function legendre'
+ printf,u,'		order 2'
+ printf,u,'		sample  ',sam1,':',sam2,',',sam3,':',sam4, $
          		FORMAT='(A,F-10.1,T16,A1,F-10.1,T22,A1,F-10.1,T28,A1,F-10.1)'
-    print,'		naverage -100'
-    print,'		niterate 3'
-    print,'		low_reject 3.'
-    print,'		high_reject 3.'
-    print,'		grow 0.'
-    print,'	axis	',2, FORMAT='(A,I1)'
-    print,'	curve	',8, FORMAT='(A,I1)'
-    print,'		',coef1, FORMAT='(A,A)'
-    print,'		',coef2, FORMAT='(A,A)'
-    print,'		',coef3, FORMAT='(A,A)'
-    print,'		',coef4, FORMAT='(A,A)'
-    print,'		',coef5, FORMAT='(A,A)'
-    print,'		',coef6, FORMAT='(A,A)'
-    print,'		',coef7, FORMAT='(A,A)'
-    print,'		',coef8, FORMAT='(A,A)'
-    print,''
+ printf,u,'		naverage -100'
+ printf,u,'		niterate 3'
+ printf,u,'		low_reject 3.'
+ printf,u,'		high_reject 3.'
+ printf,u,'		grow 0.'
+ printf,u,'	axis	',2, FORMAT='(A,I1)'
+ printf,u,'	curve	',8, FORMAT='(A,I1)'
+ printf,u,'		',coef1, FORMAT='(A,A)'
+ printf,u,'		',coef2, FORMAT='(A,A)'
+ printf,u,'		',coef3, FORMAT='(A,A)'
+ printf,u,'		',coef4, FORMAT='(A,A)'
+ printf,u,'		',coef5, FORMAT='(A,A)'
+ printf,u,'		',coef6, FORMAT='(A,A)'
+ printf,u,'		',coef7, FORMAT='(A,A)'
+ printf,u,'		',coef8, FORMAT='(A,A)'
+ printf,u,''
 
     n=n+1
 
 endrep until n eq ngood
+
+free_lun,u
 
 stop
 end
