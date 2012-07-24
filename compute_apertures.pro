@@ -1,10 +1,11 @@
-pro compute_apertures,apsize_pix,ygal,ygal_b,blue=blue
+pro compute_apertures,apsize_pix,ygal,ygal_b,apfile=apfile
 
 
 
 if n_params() lt 2 then begin
-    print,' Syntax - compute_apertures,apsize_pix,ygalred,ygalblue,/blue'
-    print,' Syntax - compute_apertures,10,643,754.4,/blue'
+    print,' Syntax - compute_apertures,apsize_pix,ygalred,ygalblue,/apfile'
+    print,' Syntax - compute_apertures,10,643,754.4,/apfile'
+    print,' Also See - compute_traces.pro'
     print,' PURPOSE: Compute the lower and upper aperture values for a given aperturesize'
     print,'          for when the position to be extracted is different from ygal, but '
     print,'          galaxy is used for defining trace - default values for LRIS pre 2009'
@@ -37,7 +38,7 @@ sam3 =  (-ygal+yh2) + 10
 sam4 =  (-ygal+yh2) + 20
 
 
-IF KEYWORD_SET(blue) THEN BEGIN
+IF KEYWORD_SET(apfile) THEN BEGIN
     lowerval_b = (-ygal+yh2)* blueside_factor - [ (apsize_pix/2.) * blueside_factor]
     upperval_b = (-ygal+yh2)* blueside_factor + [ (apsize_pix/2.) * blueside_factor]
 
