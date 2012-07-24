@@ -1,12 +1,12 @@
-pro read_log,infile,fits=fits
+pro read_log,infile,nofits=nofits
 ;;PROBLEMS AND WARNINGS WITH THIS CODE
 ;;1) Not sure if CD1_1 is dispersion delta
 ;;2) Units column is set to '1', see line 60
 ;;3) Can probably replace for loop with indgen
 ;;   see lines 30-31 for inspiration
 if n_params() lt 1 then begin
-    print,' Syntax - read_log,infile,fits=fits'
-    print,' Syntax - read_log,"sn2006ss.log",/fits'
+    print,' Syntax - read_log,infile,nofits=fofits'
+    print,' Syntax - read_log,"sn2006ss.log",/nofits'
 endif
 
   outfile = infile
@@ -82,7 +82,19 @@ endif
 
 
 
-IF keyword_set(fits) then begin ;ACTIVATE WITH KEYWORD
+IF keyword_set(nofits) then begin ;ACTIVATE WITH KEYWORD
+
+ ;PRINT EVERYTHING TO TERMINAL AND OUTFILE
+ print, heading1
+ print, bar  
+ printf, u, heading1
+ printf, u, bar
+  for j=0, range3 do begin
+  print,   matrix[0,j],matrix[1,j],matrix[2,j],matrix[3,j],matrix[4,j],matrix[5,j], matrix[8,j],F=fmt1
+  printf,u,matrix[0,j],matrix[1,j],matrix[2,j],matrix[3,j],matrix[4,j],matrix[5,j], matrix[8,j],F=fmt1
+  endfor
+
+ENDIF else begin                ;KEYWORD NOT ACTIVATED
 
  for n=0,range2 do begin                  ;loop final matrix, read fits and add columns
   if indices6[n]-indices6[n-1] eq 1 then begin
@@ -118,18 +130,6 @@ IF keyword_set(fits) then begin ;ACTIVATE WITH KEYWORD
            matrix[6,j],matrix[7,j],matrix[8,j],matrix[9,j],matrix[10,j], F=fmt2
   printf,u,matrix[0,j],matrix[1,j],matrix[2,j],matrix[3,j],matrix[4,j],matrix[5,j],$
            matrix[6,j],matrix[7,j],matrix[8,j],matrix[9,j],matrix[10,j], F=fmt2
-  endfor
-
-ENDIF else begin                ;KEYWORD NOT ACTIVATED
-
- ;PRINT EVERYTHING TO TERMINAL AND OUTFILE
- print, heading1
- print, bar  
- printf, u, heading1
- printf, u, bar
-  for j=0, range3 do begin
-  print,   matrix[0,j],matrix[1,j],matrix[2,j],matrix[3,j],matrix[4,j],matrix[5,j], matrix[8,j],F=fmt1
-  printf,u,matrix[0,j],matrix[1,j],matrix[2,j],matrix[3,j],matrix[4,j],matrix[5,j], matrix[8,j],F=fmt1
   endfor
 
 ENDELSE
